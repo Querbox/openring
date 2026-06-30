@@ -1,13 +1,13 @@
 import type { RingPacket } from "@openring/core";
-import type { DecodedFrame, FrameDecoder } from "./types";
-import { HeuristicByteFrameDecoder } from "./heuristic";
+import type { DecodedFrame, FrameDecoder } from "./types.ts";
+import { HeuristicByteFrameDecoder } from "./heuristic.ts";
 
 export type {
   DecodedField,
   DecodedFrame,
   ChecksumResult,
   FrameDecoder,
-} from "./types";
+} from "./types.ts";
 
 export {
   xorSum,
@@ -15,9 +15,9 @@ export {
   crc8,
   identifyChecksum,
   type ChecksumGuess,
-} from "./checksum";
+} from "./checksum.ts";
 
-export { HeuristicByteFrameDecoder } from "./heuristic";
+export { HeuristicByteFrameDecoder } from "./heuristic.ts";
 
 /**
  * Apply the first matching decoder in `decoders`, falling back to the

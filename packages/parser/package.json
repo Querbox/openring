@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@openring/core": "*",
+    "@openring/decoder": "*",
     "@openring/protocol": "*"
   },
   "devDependencies": {

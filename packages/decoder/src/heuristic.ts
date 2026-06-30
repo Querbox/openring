@@ -1,6 +1,6 @@
 import type { RingPacket } from "@openring/core";
-import type { DecodedField, DecodedFrame, FrameDecoder } from "./types";
-import { identifyChecksum } from "./checksum";
+import type { DecodedField, DecodedFrame, FrameDecoder } from "./types.ts";
+import { identifyChecksum } from "./checksum.ts";
 
 /**
  * Default framing heuristic for unknown devices.

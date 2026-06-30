@@ -107,15 +107,21 @@ safe path back to factory firmware.
 73 0C 1E 00 00 00 00 00 00 00 00 00 00 00 9D
 ```
 
-15 bytes. Working hypothesis:
+15 bytes. After running the packet through `@openring/decoder` (see
+[`tools/decoder-smoke.ts`](../../tools/decoder-smoke.ts)) we now know:
 
-| Bytes      | Hypothesis                                 |
+| Bytes      | Decoded                                    |
 | ---------- | ------------------------------------------ |
-| `73`       | Opcode / packet type                       |
-| `0C`       | Length (12 dec) — or sub-command           |
-| `1E`       | Counter / status / data (30 dec)           |
-| `00…00`    | Padding                                    |
-| `9D`       | Checksum (XOR-sum is the common BLE choice)|
+| `73`       | Opcode                                     |
+| `0C`       | Length — **matches** the 12-byte payload   |
+| `1E`       | Payload byte 0 — meaning unknown (counter? status? value?) |
+| `00…00`    | Payload bytes 1..11 — padding              |
+| `9D`       | Checksum — **byte-sum** over bytes 0..13 ✓ |
+
+`0x73 + 0x0C + 0x1E = 0x9D`. **Confirmed checksum scheme: byte-sum**,
+not XOR. (XOR of the same bytes would give `0x61`, CRC-8/CCITT would
+give a different value — only byte-sum matches.) This is the first hard
+fact about the framing scheme.
 
 Stored verbatim in [`captures/2026-06-29-initial-notification.hex`](./captures/2026-06-29-initial-notification.hex).
 
@@ -140,7 +146,8 @@ Implications:
 | ✅ Firmware & hardware versions                     | ❌ Data structures                       |
 | ✅ OTA service exists (TI OAD)                      | ❌ Command list                          |
 | ✅ UART is the primary channel                      | ❌ Firmware binary                       |
-| ✅ Standard Device Info fields readable             | ❌ Checksum algorithm (XOR? CRC8?)        |
+| ✅ Standard Device Info fields readable             | ❌ Per-opcode payload field meanings      |
+| ✅ Checksum algorithm (**byte-sum** over body)      |                                          |
 
 ## Open questions for Phase 1
 
@@ -148,7 +155,7 @@ Implications:
 2. Does the ring require a time-sync command before it emits sensor data? (Common pattern in this category.)
 3. Which channel — UART, `FFB0/FFB2`, or `FFB0/FFB5` — carries heart-rate / SpO₂ telemetry?
 4. Is there an auth/pair step? `FEA2`'s Indicate property suggests possibly yes.
-5. Checksum scheme: XOR-sum vs CRC8 vs Fletcher? Run a few writes through each and compare against `9D`.
+5. ~~Checksum scheme: XOR-sum vs CRC8 vs Fletcher?~~ **Answered**: byte-sum over the packet body.
 
 ## Reference architecture (suspected)
 

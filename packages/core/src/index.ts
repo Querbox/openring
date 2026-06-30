@@ -11,4 +11,5 @@ export type {
   RingCharacteristic,
   RingPacket,
   ConnectionState,
+  SemanticKind,
 } from "./types";

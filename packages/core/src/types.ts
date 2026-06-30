@@ -31,3 +31,27 @@ export interface RingPacket {
   direction: "in" | "out";
   bytes: Uint8Array;
 }
+
+/**
+ * The taxonomy of meanings a packet can carry. Defined here in core so
+ * `protocol` (declarative definitions), `parser` (events tagged with a
+ * kind), and `metrics` (aggregations grouped by kind) all reference the
+ * same union.
+ *
+ * `raw` and `unknown` are escape hatches — `raw` means the parser
+ * intentionally returns bytes without semantic interpretation; `unknown`
+ * means no `ProtocolDefinition` matched.
+ */
+export type SemanticKind =
+  | "heart-rate"
+  | "spo2"
+  | "hrv"
+  | "temperature"
+  | "battery"
+  | "steps"
+  | "sleep-stage"
+  | "status"
+  | "ack"
+  | "time-sync"
+  | "raw"
+  | "unknown";

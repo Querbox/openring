@@ -13,6 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "allowImportingTsExtensions": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "declaration": true,
@@ -21,6 +22,7 @@
     "paths": {
       "@openring/core": ["./packages/core/src/index.ts"],
       "@openring/ble": ["./packages/ble/src/index.ts"],
+      "@openring/decoder": ["./packages/decoder/src/index.ts"],
       "@openring/parser": ["./packages/parser/src/index.ts"],
       "@openring/protocol": ["./packages/protocol/src/index.ts"],
       "@openring/ui": ["./packages/ui/src/index.ts"]
