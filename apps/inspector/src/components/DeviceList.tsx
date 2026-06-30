@@ -1,10 +1,24 @@
 import type { UseBleResult } from "../ble";
+import type { ConnectionState } from "@openring/core";
+
+const CONNECTION_RANK: Record<ConnectionState, number> = {
+  connected: 0,
+  connecting: 1,
+  scanning: 2,
+  disconnected: 3,
+  error: 4,
+};
 
 export function DeviceList({ ble }: { ble: UseBleResult }) {
   const { state, startScan, stopScan, connect, disconnect, select } = ble;
-  const devices = Object.values(state.devices).sort(
-    (a, b) => (b.rssi ?? -200) - (a.rssi ?? -200),
-  );
+  const devices = Object.values(state.devices).sort((a, b) => {
+    const ca = state.connections[a.id] ?? "disconnected";
+    const cb = state.connections[b.id] ?? "disconnected";
+    const rankDiff =
+      (CONNECTION_RANK[ca] ?? 99) - (CONNECTION_RANK[cb] ?? 99);
+    if (rankDiff !== 0) return rankDiff;
+    return (b.rssi ?? -200) - (a.rssi ?? -200);
+  });
 
   return (
     <section className="device-list">
