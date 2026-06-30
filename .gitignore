@@ -37,6 +37,10 @@ Thumbs.db
 *.swp
 *.swo
 
+# Claude Code (local session data; project-level config lives at .claude/ too,
+# but per-user local settings should not be committed)
+.claude/settings.local.json
+
 # Python (BLE reverse engineering tools)
 __pycache__/
 *.py[cod]
