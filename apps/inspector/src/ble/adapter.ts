@@ -53,6 +53,7 @@ function toRingDevice(p: BleDevicePayload): RingDevice {
 function toRingPacket(p: BlePacketPayload): RingPacket {
   return {
     timestamp: p.timestamp_ms,
+    deviceId: p.device_id,
     characteristicUuid: p.characteristic_uuid,
     direction: p.direction,
     bytes: Uint8Array.from(p.bytes),

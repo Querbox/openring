@@ -1,4 +1,5 @@
 mod ble;
+mod session;
 
 use serde::Serialize;
 
@@ -20,6 +21,7 @@ fn app_info() -> AppInfo {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
         .manage(ble::BleState::new())
         .invoke_handler(tauri::generate_handler![
             app_info,
@@ -31,6 +33,8 @@ pub fn run() {
             ble::ble_subscribe,
             ble::ble_unsubscribe,
             ble::ble_write,
+            session::session_save,
+            session::session_open,
         ])
         .run(tauri::generate_context!())
         .expect("error while running OpenRing Inspector");

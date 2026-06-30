@@ -139,14 +139,20 @@ button {
 
 .topbar {
   -webkit-app-region: drag;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--s-4);
   padding: 0 var(--s-5) 0 calc(76px); /* leave room for macOS traffic lights */
   border-bottom: 1px solid var(--border);
   background: linear-gradient(180deg, var(--bg-1) 0%, rgba(14, 16, 21, 0.8) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+}
+
+.topbar-center {
+  justify-self: center;
+  -webkit-app-region: no-drag;
 }
 
 .topbar-brand {
@@ -272,6 +278,196 @@ button {
   background: rgba(248, 113, 113, 0.08);
   border: 1px solid rgba(248, 113, 113, 0.3);
   color: #fca5a5;
+}
+
+.banner-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(56, 189, 248, 0.06);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: var(--accent-2);
+}
+
+.banner-info code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  padding: 1px 6px;
+  background: rgba(56, 189, 248, 0.1);
+  border-radius: 4px;
+}
+
+.banner-info em {
+  color: var(--text-3);
+  font-style: normal;
+}
+
+.banner-dismiss {
+  margin-left: var(--s-3);
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.banner-dismiss:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-1);
+}
+
+/* ─── Recorder controls ─── */
+
+.recorder {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.rec-start,
+.rec-open,
+.rec-stop {
+  -webkit-app-region: no-drag;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-1);
+  transition: border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+
+.rec-start:hover,
+.rec-open:hover {
+  border-color: var(--accent-1);
+  background: rgba(139, 92, 246, 0.06);
+}
+
+.rec-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--danger);
+  flex-shrink: 0;
+}
+
+.rec-dot-idle {
+  background: var(--text-3);
+}
+
+.recorder.is-recording {
+  padding: 4px 6px 4px 12px;
+  border-radius: 999px;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: #fca5a5;
+  font-size: 11.5px;
+}
+
+.recorder.is-recording .rec-dot {
+  background: var(--danger);
+  animation: rec-pulse 1s var(--ease) infinite;
+}
+
+@keyframes rec-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.6);
+  }
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 6px rgba(248, 113, 113, 0);
+  }
+}
+
+.rec-time {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--text-1);
+}
+
+.rec-sep {
+  color: var(--text-3);
+}
+
+.rec-count {
+  color: var(--text-2);
+}
+
+.rec-stop {
+  margin-left: var(--s-2);
+  padding: 3px 10px;
+  background: rgba(248, 113, 113, 0.18);
+  border-color: rgba(248, 113, 113, 0.5);
+  color: #fca5a5;
+}
+
+.rec-stop:hover {
+  background: rgba(248, 113, 113, 0.28);
+  border-color: var(--danger);
+}
+
+.rec-stop-square {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+/* ─── Metric supplements ─── */
+
+.metric-supplements {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.metric-supp {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-2);
+  font-size: 11px;
+}
+
+.metric-supp-label {
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 9.5px;
+  font-weight: 600;
+}
+
+.metric-supp-value {
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-supp-rr {
+  max-width: 70%;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metric-supp-more {
+  color: var(--text-3);
+  font-style: italic;
 }
 
 /* ─── Dashboard 2x2 grid ─── */

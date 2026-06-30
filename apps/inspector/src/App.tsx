@@ -18,6 +18,27 @@ export function App() {
         </div>
       )}
 
+      {ble.state.loadedSession && (
+        <div className="banner banner-info" role="status">
+          <span>
+            Loaded <strong>{ble.state.loadedSession.eventCount}</strong> events
+            from <code>{ble.state.loadedSession.path.split("/").pop()}</code>
+            {ble.state.loadedSession.skipped > 0 && (
+              <>
+                {" "}
+                · <em>{ble.state.loadedSession.skipped} lines skipped</em>
+              </>
+            )}
+          </span>
+          <button
+            className="banner-dismiss"
+            onClick={() => ble.dismissLoadedSession()}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <main className="dashboard">
         <section className="dash-cell cell-devices">
           <DeviceList ble={ble} />

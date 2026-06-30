@@ -27,6 +27,8 @@ export interface RingCharacteristic {
 
 export interface RingPacket {
   timestamp: number;
+  /** Set by the BLE adapter when the packet originates from a connected device. */
+  deviceId?: string;
   characteristicUuid: string;
   direction: "in" | "out";
   bytes: Uint8Array;

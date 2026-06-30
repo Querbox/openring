@@ -1,4 +1,5 @@
 import type { SemanticKind } from "@openring/core";
+import type { SemanticValue } from "@openring/parser";
 import type { MetricSnapshot } from "../ble/useBle";
 
 const METRIC_VISUALS: Partial<
@@ -45,8 +46,8 @@ export function MetricsPanel({
         <div className="empty-state-soft">
           <p className="empty-title">No live metrics yet</p>
           <p className="empty-hint">
-            Subscribe to a recognised characteristic (Battery Level, Heart Rate,
-            Temperature…) and values will appear here.
+            Subscribe to a recognised characteristic (Battery Level, Heart
+            Rate, SpO₂, Temperature…) and values appear here as they stream.
           </p>
         </div>
       ) : (
@@ -72,31 +73,69 @@ function MetricCard({
     label: kind,
     accent: "rgb(123, 128, 144)",
   };
-  const formatted = formatValue(snapshot.value, snapshot.unit);
+  const formatted = formatValue(snapshot.headline);
+  const rrSupplements = snapshot.supplementals.filter((s) =>
+    s.name.startsWith("rr-"),
+  );
+  const otherSupplements = snapshot.supplementals.filter(
+    (s) => !s.name.startsWith("rr-"),
+  );
 
   return (
     <article
       key={snapshot.updatedAt}
       className="metric-card"
-      style={{
-        ["--metric-accent" as never]: visual.accent,
-      }}
+      style={{ ["--metric-accent" as never]: visual.accent }}
     >
       <header className="metric-head">
         <span className="metric-icon" aria-hidden>
           {visual.icon}
         </span>
         <span className="metric-label">{visual.label}</span>
-        {!snapshot.inPlausibleRange && (
+        {!snapshot.headline.inPlausibleRange && (
           <span className="metric-warn" title="value outside plausible range">
             !
           </span>
         )}
       </header>
-      <div className="metric-value" key={snapshot.value}>
+
+      <div className="metric-value" key={snapshot.headline.value as number}>
         <span className="metric-number">{formatted.value}</span>
         {formatted.unit && <span className="metric-unit">{formatted.unit}</span>}
       </div>
+
+      {(otherSupplements.length > 0 || rrSupplements.length > 0) && (
+        <div className="metric-supplements">
+          {otherSupplements.map((s) => (
+            <div key={s.name} className="metric-supp">
+              <span className="metric-supp-label">{labelFor(s.name)}</span>
+              <span className="metric-supp-value">
+                {formatNumber(s.value)}
+                {s.unit ? ` ${s.unit}` : ""}
+              </span>
+            </div>
+          ))}
+          {rrSupplements.length > 0 && (
+            <div className="metric-supp">
+              <span className="metric-supp-label">RR intervals</span>
+              <span className="metric-supp-value metric-supp-rr">
+                {rrSupplements
+                  .slice(0, 4)
+                  .map((s) => formatNumber(s.value))
+                  .join(" · ")}
+                {rrSupplements.length > 4 && (
+                  <span className="metric-supp-more">
+                    {" "}
+                    + {rrSupplements.length - 4} more
+                  </span>
+                )}{" "}
+                ms
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       <footer className="metric-foot">
         <span>{Math.round(snapshot.confidence * 100)}% confidence</span>
       </footer>
@@ -104,12 +143,27 @@ function MetricCard({
   );
 }
 
-function formatValue(
-  value: number,
-  unit: string | undefined,
-): { value: string; unit: string | undefined } {
-  if (Number.isInteger(value)) {
-    return { value: String(value), unit };
+function formatValue(value: SemanticValue): {
+  value: string;
+  unit: string | undefined;
+} {
+  return {
+    value: formatNumber(value.value),
+    unit: value.unit,
+  };
+}
+
+function formatNumber(v: number | Uint8Array | string): string {
+  if (typeof v === "number") {
+    if (Number.isInteger(v)) return String(v);
+    return v.toFixed(1);
   }
-  return { value: value.toFixed(1), unit };
+  if (typeof v === "string") return v;
+  return "—";
+}
+
+function labelFor(name: string): string {
+  if (name === "energy") return "Energy expended";
+  if (name === "pulse") return "Pulse";
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }

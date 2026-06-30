@@ -1,5 +1,6 @@
 import type { ConnectionState } from "@openring/core";
 import type { UseBleResult } from "../ble";
+import { RecorderControls } from "./RecorderControls";
 
 export function TopBar({ ble }: { ble: UseBleResult }) {
   const { state } = ble;
@@ -19,6 +20,9 @@ export function TopBar({ ble }: { ble: UseBleResult }) {
           <span className="brand-name">OpenRing</span>
           <span className="brand-sub">Inspector</span>
         </div>
+      </div>
+      <div className="topbar-center">
+        <RecorderControls ble={ble} />
       </div>
       <div className={`topbar-status tone-${status.tone}`}>
         <span className={`status-dot tone-${status.tone}`} />
