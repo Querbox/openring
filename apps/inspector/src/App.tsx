@@ -1,31 +1,53 @@
+import { useState } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { DeviceList } from "./components/DeviceList";
 import { InspectorPane } from "./components/InspectorPane";
-import { useState } from "react";
+import { PacketLog } from "./components/PacketLog";
+import { useBle } from "./ble";
 
 export type View = "devices" | "logger" | "protocol" | "settings";
 
 export function App() {
   const [view, setView] = useState<View>("devices");
+  const ble = useBle();
+
+  const selected = ble.state.selectedDeviceId;
+  const connectionState = selected
+    ? (ble.state.connections[selected] ?? "disconnected")
+    : "disconnected";
 
   return (
     <div className="app">
       <div className="window-chrome" data-tauri-drag-region />
       <div className="app-grid">
-        <Sidebar active={view} onChange={setView} />
+        <Sidebar
+          active={view}
+          onChange={setView}
+          status={
+            ble.state.scanning
+              ? { label: "Scanning…", tone: "active" }
+              : selected
+                ? {
+                    label: `${ble.state.devices[selected]?.name ?? selected}`,
+                    tone: connectionState === "connected" ? "ok" : "active",
+                  }
+                : { label: "No device connected", tone: "idle" }
+          }
+          packetCount={ble.state.packets.length}
+        />
         <main className="main">
-          {view === "devices" && (
-            <div className="split">
-              <DeviceList />
-              <InspectorPane />
+          {ble.state.error && (
+            <div className="banner banner-error" role="alert">
+              <span>{ble.state.error}</span>
             </div>
           )}
-          {view === "logger" && (
-            <EmptyView
-              title="Packet Logger"
-              hint="Connect to a device and notifications will stream here."
-            />
+          {view === "devices" && (
+            <div className="split">
+              <DeviceList ble={ble} />
+              <InspectorPane ble={ble} />
+            </div>
           )}
+          {view === "logger" && <PacketLog packets={ble.state.packets} />}
           {view === "protocol" && (
             <EmptyView
               title="Protocol Explorer"

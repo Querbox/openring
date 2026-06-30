@@ -1,57 +1,75 @@
-import { useState } from "react";
+import type { UseBleResult } from "../ble";
 
-type Device = {
-  id: string;
-  name: string;
-  rssi: number;
-  vendor?: string;
-};
-
-export function DeviceList() {
-  const [scanning, setScanning] = useState(false);
-  const [devices] = useState<Device[]>([]);
+export function DeviceList({ ble }: { ble: UseBleResult }) {
+  const { state, startScan, stopScan, connect, disconnect, select } = ble;
+  const devices = Object.values(state.devices).sort(
+    (a, b) => (b.rssi ?? -200) - (a.rssi ?? -200),
+  );
 
   return (
     <section className="device-list">
       <header className="panel-header">
         <div>
           <h2>Nearby devices</h2>
-          <p className="muted">Scanning shows BLE peripherals advertising in range.</p>
+          <p className="muted">
+            Scanning shows BLE peripherals advertising in range.
+          </p>
         </div>
         <button
-          className={`scan-btn ${scanning ? "is-scanning" : ""}`}
-          onClick={() => setScanning((v) => !v)}
+          className={`scan-btn ${state.scanning ? "is-scanning" : ""}`}
+          onClick={() => (state.scanning ? stopScan() : startScan())}
         >
           <span className="scan-pulse" />
-          {scanning ? "Scanning…" : "Start scan"}
+          {state.scanning ? "Stop scan" : "Start scan"}
         </button>
       </header>
 
       {devices.length === 0 ? (
         <div className="empty-state">
           <p className="empty-title">
-            {scanning ? "Listening for advertisements…" : "No devices yet"}
+            {state.scanning ? "Listening for advertisements…" : "No devices yet"}
           </p>
           <p className="empty-hint">
-            {scanning
+            {state.scanning
               ? "Bring your ring close to the computer."
               : "Press Start scan to discover nearby smart rings."}
           </p>
         </div>
       ) : (
         <ul className="devices">
-          {devices.map((d) => (
-            <li key={d.id} className="device">
-              <div className="device-main">
-                <span className="device-name">{d.name}</span>
-                <span className="device-id">{d.id}</span>
-              </div>
-              <div className="device-meta">
-                <span className="rssi">{d.rssi} dBm</span>
-                {d.vendor && <span className="vendor">{d.vendor}</span>}
-              </div>
-            </li>
-          ))}
+          {devices.map((d) => {
+            const conn = state.connections[d.id] ?? "disconnected";
+            const isSelected = state.selectedDeviceId === d.id;
+            return (
+              <li
+                key={d.id}
+                className={`device ${isSelected ? "is-selected" : ""}`}
+                onClick={() => select(d.id)}
+              >
+                <div className="device-main">
+                  <span className="device-name">{d.name}</span>
+                  <span className="device-id">{d.id}</span>
+                </div>
+                <div className="device-meta">
+                  <span className="rssi">{d.rssi ?? "?"} dBm</span>
+                  <button
+                    className={`connect-btn tone-${conn}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (conn === "connected") void disconnect(d.id);
+                      else void connect(d.id);
+                    }}
+                  >
+                    {conn === "connected"
+                      ? "Disconnect"
+                      : conn === "connecting"
+                        ? "Connecting…"
+                        : "Connect"}
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

@@ -7,12 +7,18 @@ const items: Array<{ id: View; label: string; hint: string }> = [
   { id: "settings", label: "Settings", hint: "Preferences" },
 ];
 
+export type StatusTone = "idle" | "active" | "ok";
+
 export function Sidebar({
   active,
   onChange,
+  status,
+  packetCount,
 }: {
   active: View;
   onChange: (v: View) => void;
+  status: { label: string; tone: StatusTone };
+  packetCount: number;
 }) {
   return (
     <aside className="sidebar">
@@ -31,15 +37,20 @@ export function Sidebar({
             className={`nav-item ${active === item.id ? "is-active" : ""}`}
             onClick={() => onChange(item.id)}
           >
-            <span className="nav-label">{item.label}</span>
+            <span className="nav-label">
+              {item.label}
+              {item.id === "logger" && packetCount > 0 && (
+                <span className="badge">{packetCount}</span>
+              )}
+            </span>
             <span className="nav-hint">{item.hint}</span>
           </button>
         ))}
       </nav>
 
       <div className="sidebar-footer">
-        <span className="status-dot" />
-        <span className="status-text">No device connected</span>
+        <span className={`status-dot tone-${status.tone}`} />
+        <span className="status-text">{status.label}</span>
       </div>
     </aside>
   );
