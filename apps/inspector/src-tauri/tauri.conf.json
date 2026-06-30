@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "OpenRing Inspector",
+  "version": "0.0.1",
+  "identifier": "dev.openring.inspector",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "OpenRing Inspector",
+        "width": 1200,
+        "height": 780,
+        "minWidth": 960,
+        "minHeight": 640,
+        "decorations": true,
+        "transparent": false,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "backgroundColor": "#0a0b0f"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.png"
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "Inspect smart ring BLE protocols.",
+    "longDescription": "OpenRing Inspector is a desktop tool for exploring the BLE services, characteristics, and packets of smart rings."
+  }
+}

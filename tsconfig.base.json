@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "paths": {
+      "@openring/core": ["./packages/core/src/index.ts"],
+      "@openring/ble": ["./packages/ble/src/index.ts"],
+      "@openring/parser": ["./packages/parser/src/index.ts"],
+      "@openring/protocol": ["./packages/protocol/src/index.ts"],
+      "@openring/ui": ["./packages/ui/src/index.ts"]
+    }
+  }
+}

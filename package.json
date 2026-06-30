@@ -1,0 +1,25 @@
+{
+  "name": "openring",
+  "version": "0.0.1",
+  "private": true,
+  "description": "The open platform for smart rings.",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "inspector": "npm run dev -w @openring/inspector",
+    "inspector:tauri": "npm run tauri:dev -w @openring/inspector",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "rm -rf node_modules **/node_modules **/dist **/target"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
