@@ -162,11 +162,24 @@ button {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--s-4);
-  padding: 0 var(--s-5) 0 calc(76px);
+  padding: 0 var(--s-5) 0 76px;
   border-bottom: 1px solid var(--border);
   background: linear-gradient(180deg, var(--bg-1) 0%, rgba(14, 16, 21, 0.8) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+}
+
+.topbar > *,
+.topbar-brand,
+.brand-mark,
+.brand-text,
+.topbar-status {
+  -webkit-app-region: drag;
+}
+
+.topbar button,
+.topbar [data-tauri-drag-region="false"] {
+  -webkit-app-region: no-drag;
 }
 
 .topbar-left {

@@ -39,6 +39,7 @@ export function RecorderControls({ ble }: { ble: UseBleResult }) {
           className="rec-stop"
           onClick={() => void stopRecording()}
           title="Stop recording and save"
+          data-tauri-drag-region="false"
         >
           <span className="rec-stop-square" aria-hidden />
           Stop
@@ -53,6 +54,7 @@ export function RecorderControls({ ble }: { ble: UseBleResult }) {
         className="rec-start"
         onClick={() => startRecording()}
         title="Start a new recording"
+        data-tauri-drag-region="false"
       >
         <span className="rec-dot rec-dot-idle" aria-hidden />
         Record
@@ -61,6 +63,7 @@ export function RecorderControls({ ble }: { ble: UseBleResult }) {
         className="rec-open"
         onClick={() => void openSession()}
         title="Open a saved .session.jsonl file"
+        data-tauri-drag-region="false"
       >
         Open
       </button>

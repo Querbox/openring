@@ -20,13 +20,14 @@ export function TopBar({
   const status = computeStatus(state.scanning, conn, device?.name);
 
   return (
-    <header className="topbar" data-tauri-drag-region>
-      <div className="topbar-left">
+    <header className="topbar" data-tauri-drag-region="">
+      <div className="topbar-left" data-tauri-drag-region="">
         <button
           className="sidebar-pill-toggle"
           onClick={onToggleSidebar}
           title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-label="Toggle sidebar"
+          data-tauri-drag-region="false"
         >
           <span className="hamburger" aria-hidden>
             <span />
@@ -34,20 +35,36 @@ export function TopBar({
             <span />
           </span>
         </button>
-        <div className="topbar-brand">
-          <div className="brand-mark" aria-hidden />
-          <div className="brand-text">
-            <span className="brand-name">OpenRing</span>
-            <span className="brand-sub">Inspector</span>
+        <div className="topbar-brand" data-tauri-drag-region="">
+          <div
+            className="brand-mark"
+            aria-hidden
+            data-tauri-drag-region=""
+          />
+          <div className="brand-text" data-tauri-drag-region="">
+            <span className="brand-name" data-tauri-drag-region="">
+              OpenRing
+            </span>
+            <span className="brand-sub" data-tauri-drag-region="">
+              Inspector
+            </span>
           </div>
         </div>
       </div>
-      <div className="topbar-center">
+      <div className="topbar-center" data-tauri-drag-region="">
         <RecorderControls ble={ble} />
       </div>
-      <div className={`topbar-status tone-${status.tone}`}>
-        <span className={`status-dot tone-${status.tone}`} />
-        <span className="status-text">{status.label}</span>
+      <div
+        className={`topbar-status tone-${status.tone}`}
+        data-tauri-drag-region=""
+      >
+        <span
+          className={`status-dot tone-${status.tone}`}
+          data-tauri-drag-region=""
+        />
+        <span className="status-text" data-tauri-drag-region="">
+          {status.label}
+        </span>
       </div>
     </header>
   );
