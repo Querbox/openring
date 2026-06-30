@@ -1,16 +1,24 @@
+import { useState } from "react";
 import { TopBar } from "./components/TopBar";
+import { Sidebar, type View } from "./components/Sidebar";
 import { DeviceList } from "./components/DeviceList";
 import { ServicesTree } from "./components/ServicesTree";
 import { MetricsPanel } from "./components/MetricsPanel";
-import { PacketLog } from "./components/PacketLog";
+import { TimelinePanel } from "./components/TimelinePanel";
 import { useBle } from "./ble";
 
 export function App() {
   const ble = useBle();
+  const [view, setView] = useState<View>("dashboard");
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="app">
-      <TopBar ble={ble} />
+    <div className={`app ${collapsed ? "is-sidebar-collapsed" : ""}`}>
+      <TopBar
+        ble={ble}
+        onToggleSidebar={() => setCollapsed((v) => !v)}
+        sidebarCollapsed={collapsed}
+      />
 
       {ble.state.error && (
         <div className="banner banner-error" role="alert">
@@ -39,20 +47,45 @@ export function App() {
         </div>
       )}
 
-      <main className="dashboard">
-        <section className="dash-cell cell-devices">
-          <DeviceList ble={ble} />
-        </section>
-        <section className="dash-cell cell-metrics">
-          <MetricsPanel metrics={ble.state.metrics} />
-        </section>
-        <section className="dash-cell cell-services">
-          <ServicesTree ble={ble} />
-        </section>
-        <section className="dash-cell cell-packets">
-          <PacketLog packets={ble.state.packets} />
-        </section>
-      </main>
+      <div className="shell">
+        <Sidebar
+          view={view}
+          onChangeView={setView}
+          collapsed={collapsed}
+          onToggleCollapsed={() => setCollapsed((v) => !v)}
+          ble={ble}
+        />
+        <main className="view">
+          {view === "dashboard" && <MetricsPanel metrics={ble.state.metrics} />}
+          {view === "devices" && (
+            <div className="devices-view">
+              <DeviceList ble={ble} />
+              <ServicesTree ble={ble} />
+            </div>
+          )}
+          {view === "timeline" && <TimelinePanel packets={ble.state.packets} />}
+          {view === "settings" && <SettingsPlaceholder />}
+        </main>
+      </div>
     </div>
+  );
+}
+
+function SettingsPlaceholder() {
+  return (
+    <section className="settings-view">
+      <header className="view-header">
+        <div>
+          <h1>Settings</h1>
+          <p className="muted">Preferences will live here.</p>
+        </div>
+      </header>
+      <div className="empty-state-soft empty-state-big">
+        <p className="empty-title">Nothing here yet</p>
+        <p className="empty-hint">
+          Theme, capture preferences, and device defaults will land soon.
+        </p>
+      </div>
+    </section>
   );
 }

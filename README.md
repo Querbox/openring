@@ -96,16 +96,74 @@ openring/
 └── tools/              # Reverse engineering & dev scripts
 ```
 
-## Quick start
+## Install the Inspector
 
-Prerequisites: Node 20+, Rust (stable), npm.
+### Prerequisites
+
+| Tool | Why | Install |
+| --- | --- | --- |
+| **Node.js 20+** | Build tooling and the React frontend | [nodejs.org](https://nodejs.org) or `brew install node` |
+| **Rust (stable)** | Tauri shell + the BLE backend (`btleplug`) | [rustup.rs](https://rustup.rs) or `brew install rustup` |
+| **Git** | Cloning this repo | Comes with macOS Xcode tools; otherwise OS package |
+| **A working Bluetooth stack** | …obviously | macOS / Linux / Windows |
+
+macOS extras: nothing — `tauri dev` builds a dev binary with the right
+`NSBluetoothAlwaysUsageDescription` linked in, so CoreBluetooth grants
+permission on first launch. Linux: install `libdbus-1-dev` and `bluez`
+via your package manager. Windows: the Windows BLE stack works out of
+the box on Windows 10/11.
+
+### 1 · Clone and install
 
 ```bash
+git clone https://github.com/Querbox/openring.git
+cd openring
 npm install
-npm run inspector:tauri   # launch the inspector desktop app
 ```
 
-First launch on macOS triggers a Bluetooth permission prompt.
+The first `npm install` pulls about ~80 packages including the Tauri
+CLI, React, and Vite. `cargo` will fetch its own crates on the first
+build (a few minutes).
+
+### 2 · Run the Inspector in dev mode
+
+```bash
+npm run inspector:tauri
+```
+
+The first launch compiles the Rust crate from scratch — expect ~2–5
+minutes the first time, near-instant on subsequent runs. A native window
+opens with the OpenRing Inspector dashboard. **macOS will prompt you for
+Bluetooth permission** on first launch — accept it, otherwise the
+scanner sees nothing.
+
+If you only want the React frontend (no Tauri shell) for UI work, run:
+
+```bash
+npm run inspector              # http://localhost:1420
+```
+
+### 3 · Build a distributable
+
+```bash
+npm run tauri:build -w @openring/inspector
+```
+
+The bundled artefact lands under
+`apps/inspector/src-tauri/target/release/bundle/` —
+`.app` on macOS, `.msi` on Windows, `.AppImage` / `.deb` / `.rpm` on
+Linux. Bundling the full icon set first (one-time):
+
+```bash
+npm run tauri -w @openring/inspector -- icon apps/inspector/src-tauri/icons/icon.png
+```
+
+### Troubleshooting
+
+- **`cargo: command not found`** — install Rust via [rustup.rs](https://rustup.rs), then restart your shell so `~/.cargo/bin` is on `$PATH`.
+- **macOS Bluetooth permission denied** — open System Settings → Privacy & Security → Bluetooth and grant access to *OpenRing Inspector*. The prompt only appears once; toggle it manually if you dismissed it.
+- **First `tauri dev` is slow** — Tauri compiles a few hundred Rust crates the first time. Subsequent runs only rebuild what changed (~seconds).
+- **`Could not read package.json`** — you ran `npm` from your home directory. `cd` into the cloned `openring` folder first.
 
 See [`docs/`](./docs) for the full vision, architecture, and contribution guide.
 
