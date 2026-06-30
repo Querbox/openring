@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { lookup } from "@openring/uuid";
 import { decode } from "@openring/decoder";
 import { classify } from "@openring/parser";
 import type { RingPacket } from "@openring/core";
+import { PacketDetail } from "./PacketDetail";
 
 type Filter = "all" | "in" | "out";
 
@@ -30,7 +31,8 @@ function characteristicLabel(uuid: string): string {
   return info.name ?? info.shortId ?? uuid.slice(0, 8).toUpperCase();
 }
 
-interface DecoratedPacket extends RingPacket {
+interface DecoratedPacket {
+  packet: RingPacket;
   semantic: {
     label: string;
     confidence: number;
@@ -41,11 +43,11 @@ function decorate(p: RingPacket): DecoratedPacket {
   const frame = decode(p);
   const event = classify(frame, []);
   if (event.kind === "unknown" || event.confidence < 0.5) {
-    return { ...p, semantic: null };
+    return { packet: p, semantic: null };
   }
   const headline = event.values[0];
   if (!headline) {
-    return { ...p, semantic: null };
+    return { packet: p, semantic: null };
   }
   const value =
     typeof headline.value === "number"
@@ -54,7 +56,7 @@ function decorate(p: RingPacket): DecoratedPacket {
         : headline.value.toFixed(1)
       : "";
   return {
-    ...p,
+    packet: p,
     semantic: {
       label: `${prettyKind(event.kind)} · ${value}${headline.unit ? " " + headline.unit : ""}`,
       confidence: event.confidence,
@@ -87,9 +89,11 @@ function prettyKind(k: string): string {
 
 export function TimelinePanel({ packets }: { packets: RingPacket[] }) {
   const [filter, setFilter] = useState<Filter>("all");
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    const base = filter === "all" ? packets : packets.filter((p) => p.direction === filter);
+    const base =
+      filter === "all" ? packets : packets.filter((p) => p.direction === filter);
     return base.map(decorate);
   }, [packets, filter]);
 
@@ -102,6 +106,21 @@ export function TimelinePanel({ packets }: { packets: RingPacket[] }) {
     [packets],
   );
 
+  const selected = useMemo(() => {
+    if (!selectedKey) return null;
+    return filtered.find((d) => keyFor(d.packet) === selectedKey) ?? null;
+  }, [selectedKey, filtered]);
+
+  // Esc closes the detail panel.
+  useEffect(() => {
+    if (!selectedKey) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedKey(null);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [selectedKey]);
+
   return (
     <section className="timeline-panel">
       <header className="view-header">
@@ -109,6 +128,7 @@ export function TimelinePanel({ packets }: { packets: RingPacket[] }) {
           <h1>Timeline</h1>
           <p className="muted">
             Every notification and write, decoded when we recognise it.
+            Click a row for the full decoder breakdown.
           </p>
         </div>
         <div className="filter-chips">
@@ -133,45 +153,69 @@ export function TimelinePanel({ packets }: { packets: RingPacket[] }) {
         </div>
       </header>
 
-      {filtered.length === 0 ? (
-        <div className="empty-state-soft empty-state-big">
-          <p className="empty-title">No packets to show</p>
-          <p className="empty-hint">
-            Connect a device, subscribe to a notify characteristic, and packets
-            stream in here.
-          </p>
-        </div>
-      ) : (
-        <ol className="timeline-list">
-          {filtered.map((p, i) => (
-            <li
-              key={`${p.timestamp}-${i}`}
-              className={`timeline-row dir-${p.direction}`}
-            >
-              <span className="timeline-time">{formatTime(p.timestamp)}</span>
-              <span className="timeline-dir" aria-label={p.direction}>
-                {p.direction === "in" ? "↓" : "↑"}
-              </span>
-              <div className="timeline-main">
-                <div className="timeline-label-row">
-                  <span className="timeline-char">
-                    {characteristicLabel(p.characteristicUuid)}
+      <div
+        className={`timeline-body ${selected ? "has-detail" : ""}`}
+      >
+        {filtered.length === 0 ? (
+          <div className="empty-state-soft empty-state-big">
+            <p className="empty-title">No packets to show</p>
+            <p className="empty-hint">
+              Connect a device, subscribe to a notify characteristic, and
+              packets stream in here.
+            </p>
+          </div>
+        ) : (
+          <ol className="timeline-list">
+            {filtered.map((d) => {
+              const key = keyFor(d.packet);
+              const isSelected = key === selectedKey;
+              return (
+                <li
+                  key={key}
+                  className={`timeline-row dir-${d.packet.direction} ${
+                    isSelected ? "is-selected" : ""
+                  }`}
+                  onClick={() => setSelectedKey(isSelected ? null : key)}
+                >
+                  <span className="timeline-time">
+                    {formatTime(d.packet.timestamp)}
                   </span>
-                  {p.semantic && (
-                    <span className="timeline-semantic">
-                      {p.semantic.label}
-                    </span>
-                  )}
-                </div>
-                <code className="timeline-hex">{hex(p.bytes)}</code>
-              </div>
-              <span className="timeline-len">{p.bytes.length}B</span>
-            </li>
-          ))}
-        </ol>
-      )}
+                  <span className="timeline-dir" aria-label={d.packet.direction}>
+                    {d.packet.direction === "in" ? "↓" : "↑"}
+                  </span>
+                  <div className="timeline-main">
+                    <div className="timeline-label-row">
+                      <span className="timeline-char">
+                        {characteristicLabel(d.packet.characteristicUuid)}
+                      </span>
+                      {d.semantic && (
+                        <span className="timeline-semantic">
+                          {d.semantic.label}
+                        </span>
+                      )}
+                    </div>
+                    <code className="timeline-hex">{hex(d.packet.bytes)}</code>
+                  </div>
+                  <span className="timeline-len">{d.packet.bytes.length}B</span>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+
+        {selected && (
+          <PacketDetail
+            packet={selected.packet}
+            onClose={() => setSelectedKey(null)}
+          />
+        )}
+      </div>
     </section>
   );
+}
+
+function keyFor(p: RingPacket): string {
+  return `${p.timestamp}-${p.characteristicUuid}-${p.bytes.length}`;
 }
 
 function FilterChip({
