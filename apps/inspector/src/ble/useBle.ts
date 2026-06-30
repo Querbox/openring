@@ -1,9 +1,22 @@
 import { useEffect, useMemo, useReducer, useRef } from "react";
 import type { RingDevice, RingPacket, RingService } from "@openring/core";
 import type { BleEvent, ConnectionState } from "@openring/ble";
+import { decode } from "@openring/decoder";
+import { classify } from "@openring/parser";
+import type { SemanticKind } from "@openring/core";
 import { TauriBleAdapter } from "./adapter";
 
 const MAX_PACKETS = 500;
+
+export type MetricSnapshot = {
+  kind: SemanticKind;
+  value: number;
+  unit?: string;
+  confidence: number;
+  inPlausibleRange: boolean;
+  characteristicUuid: string;
+  updatedAt: number;
+};
 
 type State = {
   scanning: boolean;
@@ -12,6 +25,7 @@ type State = {
   connections: Record<string, ConnectionState>;
   services: Record<string, RingService[]>;
   packets: RingPacket[];
+  metrics: Partial<Record<SemanticKind, MetricSnapshot>>;
   error: string | null;
 };
 
@@ -35,6 +49,7 @@ const initialState: State = {
   connections: {},
   services: {},
   packets: [],
+  metrics: {},
   error: null,
 };
 
@@ -44,9 +59,7 @@ function reducer(state: State, action: Action): State {
       return { ...state, scanning: action.value };
     case "device-discovered": {
       const prev = state.devices[action.device.id];
-      const next = prev
-        ? { ...prev, ...action.device }
-        : action.device;
+      const next = prev ? { ...prev, ...action.device } : action.device;
       return {
         ...state,
         devices: { ...state.devices, [action.device.id]: next },
@@ -65,13 +78,34 @@ function reducer(state: State, action: Action): State {
         services: { ...state.services, [action.id]: action.services },
       };
     case "packet": {
-      const next = [action.packet, ...state.packets];
-      if (next.length > MAX_PACKETS) next.length = MAX_PACKETS;
-      return { ...state, packets: next };
+      const nextPackets = [action.packet, ...state.packets];
+      if (nextPackets.length > MAX_PACKETS) nextPackets.length = MAX_PACKETS;
+      const metric = extractMetric(action.packet);
+      const nextMetrics: Partial<Record<SemanticKind, MetricSnapshot>> = metric
+        ? { ...state.metrics, [metric.kind]: metric }
+        : state.metrics;
+      return { ...state, packets: nextPackets, metrics: nextMetrics };
     }
     case "error":
       return { ...state, error: action.message };
   }
+}
+
+function extractMetric(packet: RingPacket): MetricSnapshot | null {
+  const frame = decode(packet);
+  const event = classify(frame, []);
+  if (event.kind === "unknown" || event.confidence < 0.5) return null;
+  const first = event.values[0];
+  if (!first || typeof first.value !== "number") return null;
+  return {
+    kind: event.kind,
+    value: first.value,
+    ...(first.unit !== undefined ? { unit: first.unit } : {}),
+    confidence: event.confidence,
+    inPlausibleRange: first.inPlausibleRange,
+    characteristicUuid: packet.characteristicUuid,
+    updatedAt: packet.timestamp,
+  };
 }
 
 export interface UseBleResult {

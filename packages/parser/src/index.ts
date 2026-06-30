@@ -6,6 +6,7 @@ import type {
   SemanticField,
 } from "@openring/protocol";
 import { readField } from "./extract.ts";
+import { classifyAsSig } from "./sig.ts";
 
 export interface SemanticValue {
   name: string;
@@ -43,6 +44,9 @@ export function classify(
   frame: DecodedFrame,
   protocols: ProtocolDefinition[],
 ): SemanticEvent {
+  const sig = classifyAsSig(frame);
+  if (sig && sig.confidence > 0) return sig;
+
   const candidates: SemanticEvent[] = [];
   for (const def of protocols) {
     if (!matches(def.matcher, frame)) continue;

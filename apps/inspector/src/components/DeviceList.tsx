@@ -1,5 +1,5 @@
-import type { UseBleResult } from "../ble";
 import type { ConnectionState } from "@openring/core";
+import type { UseBleResult } from "../ble";
 
 const CONNECTION_RANK: Record<ConnectionState, number> = {
   connected: 0,
@@ -14,39 +14,33 @@ export function DeviceList({ ble }: { ble: UseBleResult }) {
   const devices = Object.values(state.devices).sort((a, b) => {
     const ca = state.connections[a.id] ?? "disconnected";
     const cb = state.connections[b.id] ?? "disconnected";
-    const rankDiff =
-      (CONNECTION_RANK[ca] ?? 99) - (CONNECTION_RANK[cb] ?? 99);
+    const rankDiff = (CONNECTION_RANK[ca] ?? 99) - (CONNECTION_RANK[cb] ?? 99);
     if (rankDiff !== 0) return rankDiff;
     return (b.rssi ?? -200) - (a.rssi ?? -200);
   });
 
   return (
     <section className="device-list">
-      <header className="panel-header">
-        <div>
-          <h2>Nearby devices</h2>
-          <p className="muted">
-            Scanning shows BLE peripherals advertising in range.
-          </p>
-        </div>
+      <header className="cell-header">
+        <h2>Devices</h2>
         <button
           className={`scan-btn ${state.scanning ? "is-scanning" : ""}`}
           onClick={() => (state.scanning ? stopScan() : startScan())}
         >
           <span className="scan-pulse" />
-          {state.scanning ? "Stop scan" : "Start scan"}
+          {state.scanning ? "Stop" : "Scan"}
         </button>
       </header>
 
       {devices.length === 0 ? (
-        <div className="empty-state">
+        <div className="empty-state-soft">
           <p className="empty-title">
-            {state.scanning ? "Listening for advertisements…" : "No devices yet"}
+            {state.scanning ? "Listening…" : "No devices yet"}
           </p>
           <p className="empty-hint">
             {state.scanning
               ? "Bring your ring close to the computer."
-              : "Press Start scan to discover nearby smart rings."}
+              : "Tap Scan to discover smart rings."}
           </p>
         </div>
       ) : (
@@ -57,30 +51,32 @@ export function DeviceList({ ble }: { ble: UseBleResult }) {
             return (
               <li
                 key={d.id}
-                className={`device ${isSelected ? "is-selected" : ""}`}
+                className={`device-row tone-${conn} ${
+                  isSelected ? "is-selected" : ""
+                }`}
                 onClick={() => select(d.id)}
               >
+                <span className={`device-dot tone-${conn}`} aria-hidden />
                 <div className="device-main">
                   <span className="device-name">{d.name}</span>
-                  <span className="device-id">{d.id}</span>
+                  <span className="device-meta">
+                    {d.rssi ?? "?"} dBm{conn !== "disconnected" ? ` · ${conn}` : ""}
+                  </span>
                 </div>
-                <div className="device-meta">
-                  <span className="rssi">{d.rssi ?? "?"} dBm</span>
-                  <button
-                    className={`connect-btn tone-${conn}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (conn === "connected") void disconnect(d.id);
-                      else void connect(d.id);
-                    }}
-                  >
-                    {conn === "connected"
-                      ? "Disconnect"
-                      : conn === "connecting"
-                        ? "Connecting…"
-                        : "Connect"}
-                  </button>
-                </div>
+                <button
+                  className={`connect-btn tone-${conn}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (conn === "connected") void disconnect(d.id);
+                    else void connect(d.id);
+                  }}
+                >
+                  {conn === "connected"
+                    ? "Disconnect"
+                    : conn === "connecting"
+                      ? "…"
+                      : "Connect"}
+                </button>
               </li>
             );
           })}
