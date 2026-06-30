@@ -587,16 +587,73 @@ button {
   margin-bottom: var(--s-2);
 }
 
+.uuid-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.uuid-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: -0.01em;
+}
+
+.uuid-tag {
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg-3);
+  color: var(--text-3);
+  border: 1px solid var(--border);
+}
+
+.uuid-tag.tag-sig-service,
+.uuid-tag.tag-sig-characteristic {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: var(--accent-2);
+}
+
+.uuid-tag.tag-vendor-service,
+.uuid-tag.tag-vendor-characteristic,
+.uuid-tag.tag-vendor-descriptor {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.35);
+  color: var(--accent-1);
+}
+
 .service-uuid {
   font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--text-1);
-  font-weight: 500;
+  font-size: 10.5px;
+  color: var(--text-3);
+  font-weight: 400;
 }
 
 .service-meta {
   font-size: 11px;
   color: var(--text-3);
+  white-space: nowrap;
+}
+
+.characteristic-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-1);
+  margin-bottom: 1px;
+}
+
+.packet-char-sub {
+  color: var(--text-3);
+  font-weight: 400;
 }
 
 .characteristics {

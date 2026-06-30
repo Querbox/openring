@@ -1,3 +1,4 @@
+import { lookup } from "@openring/uuid";
 import type { UseBleResult } from "../ble";
 
 export function InspectorPane({ ble }: { ble: UseBleResult }) {
@@ -41,44 +42,83 @@ export function InspectorPane({ ble }: { ble: UseBleResult }) {
         </div>
       ) : (
         <ul className="services">
-          {services.map((s) => (
-            <li key={s.uuid} className="service">
-              <header className="service-header">
-                <span className="service-uuid">{s.uuid}</span>
-                <span className="service-meta">
-                  {s.characteristics.length} characteristic
-                  {s.characteristics.length === 1 ? "" : "s"}
-                </span>
-              </header>
-              <ul className="characteristics">
-                {s.characteristics.map((c) => {
-                  const supportsNotify =
-                    c.properties.includes("notify") ||
-                    c.properties.includes("indicate");
-                  return (
-                    <li key={c.uuid} className="characteristic">
-                      <div className="characteristic-main">
-                        <span className="characteristic-uuid">{c.uuid}</span>
-                        <span className="characteristic-props">
-                          {c.properties.join(" · ")}
+          {services.map((s) => {
+            const info = lookup(s.uuid);
+            return (
+              <li key={s.uuid} className="service">
+                <header className="service-header">
+                  <div className="uuid-block">
+                    {info.name && (
+                      <span className="uuid-name">
+                        {info.name}
+                        <span className={`uuid-tag tag-${info.category}`}>
+                          {categoryLabel(info.category)}
                         </span>
-                      </div>
-                      {supportsNotify && (
-                        <button
-                          className="subscribe-btn"
-                          onClick={() => void subscribe(id, c.uuid)}
-                        >
-                          Subscribe
-                        </button>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </li>
-          ))}
+                      </span>
+                    )}
+                    <span className="service-uuid">
+                      {info.shortId ? `${info.shortId}  ·  ` : ""}
+                      {s.uuid}
+                    </span>
+                  </div>
+                  <span className="service-meta">
+                    {s.characteristics.length} characteristic
+                    {s.characteristics.length === 1 ? "" : "s"}
+                  </span>
+                </header>
+                <ul className="characteristics">
+                  {s.characteristics.map((c) => {
+                    const cinfo = lookup(c.uuid);
+                    const supportsNotify =
+                      c.properties.includes("notify") ||
+                      c.properties.includes("indicate");
+                    return (
+                      <li key={c.uuid} className="characteristic">
+                        <div className="characteristic-main">
+                          {cinfo.name && (
+                            <span className="characteristic-name">
+                              {cinfo.name}
+                            </span>
+                          )}
+                          <span className="characteristic-uuid">
+                            {cinfo.shortId ? `${cinfo.shortId}  ·  ` : ""}
+                            {c.uuid}
+                          </span>
+                          <span className="characteristic-props">
+                            {c.properties.join(" · ")}
+                          </span>
+                        </div>
+                        {supportsNotify && (
+                          <button
+                            className="subscribe-btn"
+                            onClick={() => void subscribe(id, c.uuid)}
+                          >
+                            Subscribe
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
   );
+}
+
+function categoryLabel(c: string): string {
+  switch (c) {
+    case "sig-service":
+    case "sig-characteristic":
+      return "SIG";
+    case "vendor-service":
+    case "vendor-characteristic":
+    case "vendor-descriptor":
+      return "Vendor";
+    default:
+      return "Unknown";
+  }
 }

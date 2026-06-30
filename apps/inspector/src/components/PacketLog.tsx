@@ -1,3 +1,4 @@
+import { lookup } from "@openring/uuid";
 import type { RingPacket } from "@openring/core";
 
 function hex(bytes: Uint8Array): string {
@@ -6,14 +7,23 @@ function hex(bytes: Uint8Array): string {
     .join(" ");
 }
 
-function shortUuid(uuid: string): string {
-  if (uuid.length <= 8) return uuid.toUpperCase();
-  return `${uuid.slice(0, 8).toUpperCase()}…`;
-}
-
 function formatTime(ms: number): string {
   const d = new Date(ms);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}.${String(d.getMilliseconds()).padStart(3, "0")}`;
+}
+
+function characteristicLabel(uuid: string): { primary: string; secondary: string } {
+  const info = lookup(uuid);
+  if (info.name) {
+    return {
+      primary: info.name,
+      secondary: info.shortId ?? `${uuid.slice(0, 8).toUpperCase()}…`,
+    };
+  }
+  return {
+    primary: info.shortId ?? `${uuid.slice(0, 8).toUpperCase()}…`,
+    secondary: "unknown",
+  };
 }
 
 export function PacketLog({ packets }: { packets: RingPacket[] }) {
@@ -39,24 +49,31 @@ export function PacketLog({ packets }: { packets: RingPacket[] }) {
         </div>
       ) : (
         <ol className="packets">
-          {packets.map((p, i) => (
-            <li
-              key={`${p.timestamp}-${i}`}
-              className={`packet dir-${p.direction}`}
-            >
-              <div className="packet-meta">
-                <span className="packet-time">{formatTime(p.timestamp)}</span>
-                <span className="packet-dir">
-                  {p.direction === "in" ? "↓ RX" : "↑ TX"}
-                </span>
-                <span className="packet-char" title={p.characteristicUuid}>
-                  {shortUuid(p.characteristicUuid)}
-                </span>
-                <span className="packet-len">{p.bytes.length} bytes</span>
-              </div>
-              <code className="packet-bytes">{hex(p.bytes)}</code>
-            </li>
-          ))}
+          {packets.map((p, i) => {
+            const label = characteristicLabel(p.characteristicUuid);
+            return (
+              <li
+                key={`${p.timestamp}-${i}`}
+                className={`packet dir-${p.direction}`}
+              >
+                <div className="packet-meta">
+                  <span className="packet-time">{formatTime(p.timestamp)}</span>
+                  <span className="packet-dir">
+                    {p.direction === "in" ? "↓ RX" : "↑ TX"}
+                  </span>
+                  <span
+                    className="packet-char"
+                    title={p.characteristicUuid}
+                  >
+                    {label.primary}
+                    <span className="packet-char-sub"> · {label.secondary}</span>
+                  </span>
+                  <span className="packet-len">{p.bytes.length} bytes</span>
+                </div>
+                <code className="packet-bytes">{hex(p.bytes)}</code>
+              </li>
+            );
+          })}
         </ol>
       )}
     </section>

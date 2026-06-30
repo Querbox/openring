@@ -25,7 +25,8 @@
       "@openring/decoder": ["./packages/decoder/src/index.ts"],
       "@openring/parser": ["./packages/parser/src/index.ts"],
       "@openring/protocol": ["./packages/protocol/src/index.ts"],
-      "@openring/ui": ["./packages/ui/src/index.ts"]
+      "@openring/ui": ["./packages/ui/src/index.ts"],
+      "@openring/uuid": ["./packages/uuid/src/index.ts"]
     }
   }
 }
