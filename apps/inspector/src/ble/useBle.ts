@@ -6,7 +6,9 @@ import { classify, type SemanticValue } from "@openring/parser";
 import {
   SessionRecorder,
   parse as parseSession,
+  hexToBytes,
   type ParseResult,
+  type SessionEvent,
 } from "@openring/session";
 import type { SemanticKind } from "@openring/core";
 import { invoke } from "@tauri-apps/api/core";
@@ -35,6 +37,8 @@ export type LoadedSession = {
   path: string;
   header: ParseResult["header"];
   eventCount: number;
+  /** How many events were actually replayed into the UI state. */
+  replayedEvents: number;
   skipped: number;
 };
 
@@ -373,12 +377,14 @@ export function useBle(): UseBleResult {
             path: selected,
           });
           const parsed = parseSession(content);
+          const replayed = replayInto(parsed.events, dispatch);
           dispatch({
             type: "session-loaded",
             session: {
               path: selected,
               header: parsed.header,
               eventCount: parsed.events.length,
+              replayedEvents: replayed,
               skipped: parsed.skipped.length,
             },
           });
@@ -392,6 +398,98 @@ export function useBle(): UseBleResult {
     }),
     [adapter, state],
   );
+}
+
+/**
+ * Translate a recorded SessionEvent stream into the same reducer
+ * dispatches the live BLE adapter would produce. The reducer doesn't
+ * know which source the events came from, so replayed sessions show up
+ * in every panel exactly like live traffic — devices appear in the
+ * list, services populate the GATT tree, notify/write packets stream
+ * into the timeline, and recognised payloads update the metric cards.
+ *
+ * Returns the count of events that were successfully dispatched.
+ */
+function replayInto(
+  events: SessionEvent[],
+  dispatch: (action: Action) => void,
+): number {
+  let replayed = 0;
+  for (const ev of events) {
+    try {
+      switch (ev.kind) {
+        case "scan-result": {
+          const device: RingDevice = {
+            id: ev.id,
+            name: ev.name?.trim() ? ev.name : ev.id,
+            rssi: ev.rssi,
+          };
+          dispatch({ type: "device-discovered", device });
+          replayed += 1;
+          break;
+        }
+        case "connect":
+          dispatch({
+            type: "connection-changed",
+            id: ev.id,
+            state: "connected",
+          });
+          replayed += 1;
+          break;
+        case "disconnect":
+          dispatch({
+            type: "connection-changed",
+            id: ev.id,
+            state: "disconnected",
+          });
+          replayed += 1;
+          break;
+        case "discover": {
+          const services: RingService[] = ev.services.map((s) => ({
+            uuid: s.uuid,
+            characteristics: s.characteristics.map((c) => ({
+              uuid: c.uuid,
+              properties: c.properties.filter(
+                (p): p is "read" | "write" | "notify" | "indicate" =>
+                  p === "read" ||
+                  p === "write" ||
+                  p === "notify" ||
+                  p === "indicate",
+              ),
+            })),
+          }));
+          dispatch({ type: "services", id: ev.id, services });
+          replayed += 1;
+          break;
+        }
+        case "notify":
+        case "write": {
+          const bytes = hexToBytes(ev.bytes);
+          const packet: RingPacket = {
+            timestamp: ev.ts,
+            deviceId: ev.id,
+            characteristicUuid: ev.characteristic,
+            direction: ev.kind === "notify" ? "in" : "out",
+            bytes,
+          };
+          dispatch({ type: "packet", packet });
+          replayed += 1;
+          break;
+        }
+        case "subscribe":
+        case "unsubscribe":
+        case "note":
+          // not surfaced in the live UI yet, so nothing to dispatch
+          break;
+      }
+    } catch (err) {
+      // Bad hex or malformed event — skip rather than abort the whole replay.
+      // The skipped count is already reported separately via parse().
+      // eslint-disable-next-line no-console
+      console.warn("[replay] skipping event", ev.kind, err);
+    }
+  }
+  return replayed;
 }
 
 function detectPlatform(): string {

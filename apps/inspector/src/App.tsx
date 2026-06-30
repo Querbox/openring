@@ -29,8 +29,10 @@ export function App() {
       {ble.state.loadedSession && (
         <div className="banner banner-info" role="status">
           <span>
-            Loaded <strong>{ble.state.loadedSession.eventCount}</strong> events
-            from <code>{ble.state.loadedSession.path.split("/").pop()}</code>
+            <strong>Replay</strong>{" "}
+            <code>{ble.state.loadedSession.path.split("/").pop()}</code> ·{" "}
+            {ble.state.loadedSession.replayedEvents} of{" "}
+            {ble.state.loadedSession.eventCount} events streamed into the view
             {ble.state.loadedSession.skipped > 0 && (
               <>
                 {" "}
@@ -41,6 +43,7 @@ export function App() {
           <button
             className="banner-dismiss"
             onClick={() => ble.dismissLoadedSession()}
+            title="Dismiss banner (replayed data stays in the view)"
           >
             ×
           </button>
