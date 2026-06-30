@@ -60,14 +60,22 @@ function toRingPacket(p: BlePacketPayload): RingPacket {
   };
 }
 
+const CHARACTERISTIC_PROPERTIES = new Set<string>([
+  "read",
+  "write",
+  "writeWithoutResponse",
+  "notify",
+  "indicate",
+]);
+
 function toRingService(s: BleServicePayload): RingService {
   return {
     uuid: s.uuid,
     characteristics: s.characteristics.map((c) => ({
       uuid: c.uuid,
       properties: c.properties.filter(
-        (x): x is "read" | "write" | "notify" | "indicate" =>
-          x === "read" || x === "write" || x === "notify" || x === "indicate",
+        (x): x is "read" | "write" | "writeWithoutResponse" | "notify" | "indicate" =>
+          CHARACTERISTIC_PROPERTIES.has(x),
       ),
     })),
   };

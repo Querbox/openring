@@ -450,9 +450,15 @@ function replayInto(
             characteristics: s.characteristics.map((c) => ({
               uuid: c.uuid,
               properties: c.properties.filter(
-                (p): p is "read" | "write" | "notify" | "indicate" =>
+                (p): p is
+                  | "read"
+                  | "write"
+                  | "writeWithoutResponse"
+                  | "notify"
+                  | "indicate" =>
                   p === "read" ||
                   p === "write" ||
+                  p === "writeWithoutResponse" ||
                   p === "notify" ||
                   p === "indicate",
               ),

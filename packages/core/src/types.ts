@@ -19,10 +19,17 @@ export interface RingService {
   characteristics: RingCharacteristic[];
 }
 
+export type CharacteristicProperty =
+  | "read"
+  | "write"
+  | "writeWithoutResponse"
+  | "notify"
+  | "indicate";
+
 export interface RingCharacteristic {
   uuid: string;
   name?: string;
-  properties: Array<"read" | "write" | "notify" | "indicate">;
+  properties: CharacteristicProperty[];
 }
 
 export interface RingPacket {

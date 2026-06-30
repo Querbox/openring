@@ -9,6 +9,7 @@ export type {
   RingDevice,
   RingService,
   RingCharacteristic,
+  CharacteristicProperty,
   RingPacket,
   ConnectionState,
   SemanticKind,

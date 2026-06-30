@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { lookup } from "@openring/uuid";
+import type { CharacteristicProperty } from "@openring/core";
 import type { UseBleResult } from "../ble";
+import { WriteRow } from "./WriteRow";
 
 export function ServicesTree({ ble }: { ble: UseBleResult }) {
-  const { state, subscribe } = ble;
+  const { state, subscribe, write } = ble;
   const id = state.selectedDeviceId;
   const services = id ? (state.services[id] ?? []) : [];
   const conn = id ? (state.connections[id] ?? "disconnected") : "disconnected";
@@ -13,7 +15,9 @@ export function ServicesTree({ ble }: { ble: UseBleResult }) {
       <header className="cell-header">
         <h2>Services</h2>
         <span className="muted">
-          {conn === "connected" ? "GATT tree of the selected device" : "Pick a device and connect"}
+          {conn === "connected"
+            ? "GATT tree of the selected device"
+            : "Pick a device and connect"}
         </span>
       </header>
 
@@ -28,8 +32,12 @@ export function ServicesTree({ ble }: { ble: UseBleResult }) {
           {services.map((s) => (
             <ServiceRow
               key={s.uuid}
+              deviceId={id}
               service={s}
               onSubscribe={(uuid) => void subscribe(id, uuid)}
+              onWrite={async (charUuid, bytes, opts) => {
+                await write(id, charUuid, bytes, opts);
+              }}
             />
           ))}
         </ul>
@@ -39,13 +47,25 @@ export function ServicesTree({ ble }: { ble: UseBleResult }) {
 }
 
 function ServiceRow({
+  deviceId,
   service,
   onSubscribe,
+  onWrite,
 }: {
-  service: { uuid: string; characteristics: { uuid: string; properties: string[] }[] };
+  deviceId: string;
+  service: {
+    uuid: string;
+    characteristics: { uuid: string; properties: CharacteristicProperty[] }[];
+  };
   onSubscribe: (characteristicUuid: string) => void;
+  onWrite: (
+    characteristicUuid: string,
+    bytes: Uint8Array,
+    opts: { withResponse: boolean },
+  ) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [writeOpenFor, setWriteOpenFor] = useState<string | null>(null);
   const info = lookup(service.uuid);
   const tag = categoryLabel(info.category);
 
@@ -56,7 +76,9 @@ function ServiceRow({
           ▶
         </span>
         <span className="service-title">
-          <span className="service-name">{info.name ?? "Unknown service"}</span>
+          <span className="service-name">
+            {info.name ?? "Unknown service"}
+          </span>
           {tag && <span className={`uuid-tag tag-${info.category}`}>{tag}</span>}
         </span>
         <span className="service-uuid">
@@ -70,28 +92,63 @@ function ServiceRow({
             const supportsNotify =
               c.properties.includes("notify") ||
               c.properties.includes("indicate");
+            const supportsWrite = c.properties.includes("write");
+            const supportsWriteWithoutResponse = c.properties.includes(
+              "writeWithoutResponse",
+            );
+            const canWrite = supportsWrite || supportsWriteWithoutResponse;
+            const writeOpen = writeOpenFor === c.uuid;
+
             return (
               <li key={c.uuid} className="characteristic">
-                <div className="characteristic-main">
-                  <span className="characteristic-name">
-                    {cinfo.name ?? "Unknown characteristic"}
-                  </span>
-                  <span className="characteristic-uuid">
-                    {cinfo.shortId ?? c.uuid.slice(0, 8).toUpperCase() + "…"}
-                    <span className="dot-sep"> · </span>
-                    {c.properties.join(" · ")}
-                  </span>
+                <div className="characteristic-line">
+                  <div className="characteristic-main">
+                    <span className="characteristic-name">
+                      {cinfo.name ?? "Unknown characteristic"}
+                    </span>
+                    <span className="characteristic-uuid">
+                      {cinfo.shortId ?? c.uuid.slice(0, 8).toUpperCase() + "…"}
+                      <span className="dot-sep"> · </span>
+                      {c.properties.join(" · ")}
+                    </span>
+                  </div>
+                  <div className="characteristic-actions">
+                    {canWrite && (
+                      <button
+                        className={`write-btn ${writeOpen ? "is-open" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setWriteOpenFor((cur) =>
+                            cur === c.uuid ? null : c.uuid,
+                          );
+                        }}
+                      >
+                        {writeOpen ? "Close" : "Write"}
+                      </button>
+                    )}
+                    {supportsNotify && (
+                      <button
+                        className="subscribe-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSubscribe(c.uuid);
+                        }}
+                      >
+                        Subscribe
+                      </button>
+                    )}
+                  </div>
                 </div>
-                {supportsNotify && (
-                  <button
-                    className="subscribe-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSubscribe(c.uuid);
+                {canWrite && writeOpen && (
+                  <WriteRow
+                    deviceId={deviceId}
+                    characteristicUuid={c.uuid}
+                    supportsWrite={supportsWrite}
+                    supportsWriteWithoutResponse={supportsWriteWithoutResponse}
+                    onSend={async (id, uuid, bytes, opts) => {
+                      await onWrite(uuid, bytes, opts);
                     }}
-                  >
-                    Subscribe
-                  </button>
+                  />
                 )}
               </li>
             );
