@@ -162,11 +162,18 @@ button {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--s-4);
-  padding: 0 var(--s-5) 0 76px;
+  /* No reserved gutter by default — Windows/Linux put window controls
+     elsewhere. macOS gets a left padding via the platform-macos override
+     below so the brand doesn't collide with the traffic lights. */
+  padding: 0 var(--s-5);
   border-bottom: 1px solid var(--border);
   background: linear-gradient(180deg, var(--bg-1) 0%, rgba(14, 16, 21, 0.8) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+}
+
+:root.platform-macos .topbar {
+  padding-left: 76px;
 }
 
 .topbar > *,
